@@ -1,12 +1,43 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import { BookOpen, Download, Eye, Maximize2, BookMarked } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from "@/components/ui/dialog";
 
-// ─── Paste the flipbook embed URL here when the team provides it ───
-const FLIPBOOK_URL = "";
+// Paste URLs here when the team provides them 
+// Nasa /public/pdf/ ng frontend folder. 
+const NEWSLETTERS = [
+  {
+    id: "auralis-2026",
+    title: "Auralis - The Blueprint",
+    volume: "Vol. 5 · Issue 2",
+    date: "February 2026",
+    flipbookUrl: "https://online.fliphtml5.com/AURALIS2026/dvtm/",
+    pdfUrl: "/pdf/Auralis - The Blueprint.pdf", //palitan ng link ng pdf
+  },
+  {
+    id: "auralis-2027",
+    title: "Auralis - The Blueprint (Copy)",
+    volume: "Vol. 6 · Issue 1",
+    date: "August 2026",
+    flipbookUrl: "https://online.fliphtml5.com/AURALIS2026/dvtm/",
+    pdfUrl: "/pdf/Auralis - The Blueprint.pdf", //palitan ng link ng pdf
+  },
+];
 
 export default function NewsletterPage() {
+  const [activeTab, setActiveTab] = React.useState(NEWSLETTERS[0].id);
+  const activeNewsletter = NEWSLETTERS.find((n) => n.id === activeTab) || NEWSLETTERS[0];
+
   return (
     <main className="min-h-screen bg-[#f2f4fb]">
 
@@ -56,6 +87,25 @@ export default function NewsletterPage() {
           <div className="flex-1 h-px bg-gradient-to-r from-[#dfe3ef] to-transparent" />
         </div>
 
+        {/* ── NEWSLETTER TABS ── */}
+        {NEWSLETTERS.length > 1 && (
+          <div className="flex overflow-x-auto gap-2 pb-6 mb-2 no-scrollbar">
+            {NEWSLETTERS.map((newsletter) => (
+              <button
+                key={newsletter.id}
+                onClick={() => setActiveTab(newsletter.id)}
+                className={`flex-shrink-0 px-5 py-2.5 rounded-full text-sm font-bold transition-all ${activeTab === newsletter.id
+                  ? "bg-[#1f2b55] text-white shadow-md border-transparent"
+                  : "bg-white text-[#4e5a7b] border border-[#dfe3ef] hover:border-[#1f2b55] hover:text-[#1f2b55]"
+                  }`}
+                style={{ fontFamily: "'Trebuchet MS', sans-serif" }}
+              >
+                {newsletter.volume}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* ── FLIPBOOK CARD ── */}
         <div className="rounded-2xl overflow-hidden border border-[#dfe3ef] shadow-lg">
 
@@ -88,40 +138,90 @@ export default function NewsletterPage() {
                   </span>
                 </div>
                 <h2 className="text-2xl font-extrabold text-white leading-tight">
-                  CEIT Newsletter — Digital Edition
+                  {activeNewsletter.title}
                 </h2>
                 <p className="text-white/55 text-sm mt-0.5">
-                  Flip through the latest issue of the official CEIT college publication.
+                  Interactive Digital Edition — {activeNewsletter.volume}
                 </p>
               </div>
 
               <div className="flex flex-wrap gap-2 flex-shrink-0">
-                <button
-                  className="inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2.5 rounded-full border border-white/25 text-white hover:bg-white/10 transition-colors"
-                  style={{ fontFamily: "'Trebuchet MS', sans-serif" }}
-                >
-                  <Download className="w-3.5 h-3.5" /> Download PDF
-                </button>
-                <button
-                  className="inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2.5 rounded-full bg-[#ef8a22] text-[#1f2b55] hover:opacity-90 transition-opacity"
-                  style={{ fontFamily: "'Trebuchet MS', sans-serif" }}
-                >
-                  <Maximize2 className="w-3.5 h-3.5" /> Full Screen
-                </button>
+                {activeNewsletter.flipbookUrl && activeNewsletter.pdfUrl ? (
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <button
+                        className="inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2.5 rounded-full border border-white/25 text-white hover:bg-white/10 transition-colors"
+                        style={{ fontFamily: "'Trebuchet MS', sans-serif" }}
+                      >
+                        <Download className="w-3.5 h-3.5" /> Download PDF
+                      </button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md bg-[#0d1623] border-[#1f2b55] text-white">
+                      <DialogHeader>
+                        <DialogTitle className="text-white text-xl">Download Newsletter</DialogTitle>
+                        <DialogDescription className="text-white/60">
+                          You are about to download "{activeNewsletter.title}". The PDF file will be saved to your device.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="flex justify-end gap-3 mt-4">
+                        <DialogClose asChild>
+                          <button className="px-5 py-2.5 rounded-md border border-white/20 text-sm font-semibold hover:bg-white/10 text-white transition-colors">
+                            Cancel
+                          </button>
+                        </DialogClose>
+                        <DialogClose asChild>
+                          <a
+                            href={activeNewsletter.pdfUrl}
+                            download={`${activeNewsletter.title}.pdf`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center rounded-md px-5 py-2.5 text-sm font-semibold bg-[#ef8a22] text-[#1f2b55] hover:opacity-90 transition-opacity"
+                          >
+                            <Download className="w-4 h-4 mr-2" /> Start Download
+                          </a>
+                        </DialogClose>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                ) : (
+                  <button
+                    disabled
+                    className="inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2.5 rounded-full border border-white/25 text-white opacity-50 cursor-not-allowed"
+                    style={{ fontFamily: "'Trebuchet MS', sans-serif" }}
+                  >
+                    <Download className="w-3.5 h-3.5" /> Download PDF
+                  </button>
+                )}
+                {activeNewsletter.flipbookUrl && (
+                  <a
+                    href={activeNewsletter.flipbookUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2.5 rounded-full bg-[#ef8a22] text-[#1f2b55] hover:opacity-90 transition-opacity"
+                    style={{
+                      fontFamily: "'Trebuchet MS', sans-serif",
+                    }}
+                  >
+                    <Maximize2 className="w-3.5 h-3.5" /> View Full Size
+                  </a>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Flipbook embed / placeholder */}
-          <div className="bg-[#0d1623] relative" style={{ minHeight: "580px" }}>
-            {FLIPBOOK_URL ? (
-              <iframe
-                title="CEIT Newsletter Flipbook"
-                src={FLIPBOOK_URL}
-                className="w-full border-0"
-                style={{ height: "580px" }}
-                allowFullScreen
-              />
+          {/* Newsletter Cover Display */}
+          <div className="bg-[#0d1623] relative overflow-hidden" style={{ minHeight: "580px" }}>
+            {activeNewsletter.flipbookUrl ? (
+              <div className="w-full h-[650px] p-4 md:p-8">
+                <iframe
+                  key={activeNewsletter.id} // Forces iframe reload when changing tabs
+                  src={activeNewsletter.flipbookUrl}
+                  className="w-full h-full rounded-lg shadow-2xl border-4 border-white/10"
+                  frameBorder="0"
+                  allowFullScreen
+                  title="CEIT Newsletter Flipbook"
+                />
+              </div>
             ) : (
               /* ── PLACEHOLDER: left = cover mockup, right = title + description ── */
               <div className="absolute inset-0 flex items-center justify-center px-8 md:px-16 select-none">
@@ -182,7 +282,7 @@ export default function NewsletterPage() {
                     <div>
                       <p className="text-[10px] font-black uppercase tracking-widest text-[#ef8a22] mb-2"
                         style={{ fontFamily: "'Trebuchet MS', sans-serif" }}>
-                        Vol. 5 · Issue 2 · February 2026
+                        {activeNewsletter.volume} · {activeNewsletter.date}
                       </p>
                       <h3 className="text-2xl font-extrabold text-white leading-tight mb-3">
                         Flipbook Coming Soon
@@ -235,12 +335,12 @@ export default function NewsletterPage() {
               <div
                 className="w-2 h-2 rounded-full"
                 style={{
-                  background: FLIPBOOK_URL ? "#10b981" : "#ef8a22",
-                  animation: FLIPBOOK_URL ? "none" : "pulse 2s infinite",
+                  background: activeNewsletter.flipbookUrl ? "#10b981" : "#ef8a22",
+                  animation: activeNewsletter.flipbookUrl ? "none" : "pulse 2s infinite",
                 }}
               />
               <p className="text-xs text-[#4e5a7b]" style={{ fontFamily: "'Trebuchet MS', sans-serif" }}>
-                {FLIPBOOK_URL ? "Flipbook loaded" : "Awaiting flipbook URL from the team"}
+                {activeNewsletter.flipbookUrl ? "Newsletter loaded" : "Awaiting pages and PDF URLs from the team"}
               </p>
             </div>
             <p className="text-xs text-[#4e5a7b]" style={{ fontFamily: "'Trebuchet MS', sans-serif" }}>

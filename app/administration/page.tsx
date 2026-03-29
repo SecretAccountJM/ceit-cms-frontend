@@ -1,8 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Users, Award } from "lucide-react";
+import { fetchSiteContent } from "@/lib/api";
+
+interface AdminCmsContent {
+  boardOfRegents: { members: { id: string; name: string; position: string; photo: string }[] };
+  organizationalChart: { members: { id: string; name: string; position: string; photo: string }[] };
+}
 
 type OrgNodeProps = {
   name: string;
@@ -96,8 +102,38 @@ const boardMembers = [
   },
 ];
 
+const defaultOrgChart = [
+  { name: "Dr. Nedena C. Torralba", position: "University President", photo: "/pres_torralba.png" },
+  { name: "Dr. Michville Rivera", position: "Vice President for Academic Affairs", photo: "/vpaa_rivera.png" },
+  { name: "Engr. Jordan N. Velasco", position: "Dean, College of CEIT", photo: "/engr_jordan-velasco.png" },
+  { name: "Norie Caunda", position: "Secretary, College of CEIT", photo: "/norie_caunda.png" },
+  { name: "Engr. Tirao", position: "Civil Engineering Department Chairperson", photo: "/engr_tirao.png" },
+  { name: "Alex Montano", position: "Electrical Engineering Department Chairperson", photo: "/alex_monstano.png" },
+  { name: "Kenmar Bernardino", position: "Information Technology Department Chairperson", photo: "/kenmar_bernardino.png" },
+  { name: "Engr. Darryl John Bandino", position: "CE Department Research Coordinator", photo: "/john-bandino.png" },
+  { name: "Engr. Erica Cruz", position: "EE Department Research Coordinator", photo: "/erika_cruz.png" },
+  { name: "Patrick Luis Francisco", position: "IT Department Research Coordinator", photo: "/patrick_francisco.png" },
+];
+
 const AdministrationPage = () => {
   const [activeTab, setActiveTab] = useState<AdministrationTab>("Board of Regents");
+  const [cmsContent, setCmsContent] = useState<AdminCmsContent | null>(null);
+
+  useEffect(() => {
+    fetchSiteContent<AdminCmsContent>("administration").then((data) => {
+      if (data) setCmsContent(data);
+    });
+  }, []);
+
+  const orgChartMembers = cmsContent?.organizationalChart?.members ?? defaultOrgChart;
+
+  // Helper to get org chart member by index with fallback
+  const org = (index: number) => {
+    const member = orgChartMembers[index];
+    return member
+      ? { name: member.name, role: member.position, image: member.photo }
+      : { name: "—", role: "—", image: undefined };
+  };
 
   return (
     <div className="min-h-screen bg-[#f2f4fb]">
@@ -217,10 +253,10 @@ const AdministrationPage = () => {
               style={{ background: "linear-gradient(135deg, #f7f8fd 0%, #eef2fa 100%)" }}
             >
               <div className="mx-auto max-w-[760px] grid grid-cols-1 gap-3">
-                {boardMembers.flatMap((group) =>
-                  group.names.map((name) => (
+                {cmsContent?.boardOfRegents?.members
+                  ? cmsContent.boardOfRegents.members.map((member) => (
                     <div
-                      key={`${group.role}-${name}`}
+                      key={member.id}
                       className="relative overflow-hidden rounded-xl border border-[#d9deec] bg-[#fcfdff] px-4 py-3 shadow-[0_1px_0_rgba(31,43,85,0.05)] text-center"
                     >
                       <span
@@ -233,17 +269,44 @@ const AdministrationPage = () => {
                         className="text-[9px] font-black uppercase tracking-widest leading-none mb-1"
                         style={{ color: "#7a8398", fontFamily: "'Trebuchet MS', sans-serif" }}
                       >
-                        {group.role}
+                        {member.position}
                       </p>
                       <p
                         className="text-[15px] font-extrabold text-[#1f2b55] leading-tight"
                         style={{ fontFamily: "'Trebuchet MS', sans-serif" }}
                       >
-                        {name}
+                        {member.name}
                       </p>
                     </div>
                   ))
-                )}
+                  : boardMembers.flatMap((group) =>
+                    group.names.map((name) => (
+                      <div
+                        key={`${group.role}-${name}`}
+                        className="relative overflow-hidden rounded-xl border border-[#d9deec] bg-[#fcfdff] px-4 py-3 shadow-[0_1px_0_rgba(31,43,85,0.05)] text-center"
+                      >
+                        <span
+                          className="pointer-events-none absolute -right-1 -bottom-2 text-[36px] font-black opacity-[0.04] leading-none select-none"
+                          style={{ color: "#1f2b55", fontFamily: "'Georgia', serif" }}
+                        >
+                          PLV
+                        </span>
+                        <p
+                          className="text-[9px] font-black uppercase tracking-widest leading-none mb-1"
+                          style={{ color: "#7a8398", fontFamily: "'Trebuchet MS', sans-serif" }}
+                        >
+                          {group.role}
+                        </p>
+                        <p
+                          className="text-[15px] font-extrabold text-[#1f2b55] leading-tight"
+                          style={{ fontFamily: "'Trebuchet MS', sans-serif" }}
+                        >
+                          {name}
+                        </p>
+                      </div>
+                    ))
+                  )
+                }
               </div>
             </div>
           </div>
@@ -285,34 +348,34 @@ const AdministrationPage = () => {
 
             {/* Mobile list */}
             <div className="space-y-3 lg:hidden mx-auto max-w-[420px]">
-              <OrgNode name="Dr. Nedena C. Torralba" role="University President" image="/pres_torralba.png" />
-              <OrgNode name="Dr. Michville Rivera" role="Vice President for Academic Affairs" image="/vpaa_rivera.png" />
-              <OrgNode name="Engr. Jordan N. Velasco" role="Dean, College of CEIT" image="/engr_jordan-velasco.png" compact />
-              <OrgNode name="Norie Caunda" role="Secretary, College of CEIT" image="/norie_caunda.png" compact />
-              <OrgNode name="Engr. Tirao" role="Civil Engineering Department Chairperson" image="/engr_tirao.png" compact />
-              <OrgNode name="Alex Montano" role="Electrical Engineering Department Chairperson" image="/alex_monstano.png" compact />
-              <OrgNode name="Kenmar Bernardino" role="Information Technology Department Chairperson" image="/kenmar_bernardino.png" compact />
-              <OrgNode name="Engr. Darryl John Bandino" role="CE Department Research Coordinator" image="/john-bandino.png" compact />
-              <OrgNode name="Engr. Erica Cruz" role="EE Department Research Coordinator" image="/erika_cruz.png" compact />
-              <OrgNode name="Patrick Luis Francisco" role="IT Department Research Coordinator" image="/patrick_francisco.png" compact />
+              <OrgNode {...org(0)} />
+              <OrgNode {...org(1)} />
+              <OrgNode {...org(2)} compact />
+              <OrgNode {...org(3)} compact />
+              <OrgNode {...org(4)} compact />
+              <OrgNode {...org(5)} compact />
+              <OrgNode {...org(6)} compact />
+              <OrgNode {...org(7)} compact />
+              <OrgNode {...org(8)} compact />
+              <OrgNode {...org(9)} compact />
             </div>
 
             {/* Desktop tree */}
             <div className="hidden lg:block overflow-x-auto pb-4">
               <div className="mx-auto min-w-[1040px] text-center">
 
-                <OrgNode name="Dr. Nedena C. Torralba" role="University President" image="/pres_torralba.png" />
+                <OrgNode {...org(0)} />
                 <div className="mx-auto h-8 w-px bg-[#dfe3ef]" />
 
-                <OrgNode name="Dr. Michville Rivera" role="Vice President for Academic Affairs" image="/vpaa_rivera.png" />
+                <OrgNode {...org(1)} />
                 <div className="mx-auto h-8 w-px bg-[#dfe3ef]" />
 
                 {/* Dean + Secretary side by side */}
                 <div className="relative mx-auto w-[620px]">
                   <div className="absolute left-1/2 top-1/2 h-px w-[360px] -translate-x-1/2 -translate-y-1/2 bg-[#dfe3ef]" />
                   <div className="relative flex items-center justify-center gap-6">
-                    <OrgNode name="Engr. Jordan N. Velasco" role="Dean, College of CEIT" image="/engr_jordan-velasco.png" compact accent="#ef8a22" />
-                    <OrgNode name="Norie Caunda" role="Secretary, College of CEIT" image="/norie_caunda.png" compact />
+                    <OrgNode {...org(2)} compact accent="#ef8a22" />
+                    <OrgNode {...org(3)} compact />
                   </div>
                 </div>
 
@@ -327,9 +390,9 @@ const AdministrationPage = () => {
 
                 {/* Dept chairs */}
                 <div className="flex justify-center gap-10">
-                  <OrgNode name="Engr. Tirao" role="Civil Engineering Department Chairperson" image="/engr_tirao.png" compact accent="#10b981" />
-                  <OrgNode name="Alex Montano" role="Electrical Engineering Department Chairperson" image="/alex_monstano.png" compact accent="#f59e0b" />
-                  <OrgNode name="Kenmar Bernardino" role="Information Technology Department Chairperson" image="/kenmar_bernardino.png" compact accent="#3b82f6" />
+                  <OrgNode {...org(4)} compact accent="#10b981" />
+                  <OrgNode {...org(5)} compact accent="#f59e0b" />
+                  <OrgNode {...org(6)} compact accent="#3b82f6" />
                 </div>
 
                 <div className="mx-auto mt-2 mb-2 flex w-[980px] justify-between px-[100px]">
@@ -340,9 +403,9 @@ const AdministrationPage = () => {
 
                 {/* Research coordinators */}
                 <div className="flex justify-center gap-10">
-                  <OrgNode name="Engr. Darryl John Bandino" role="CE Department Research Coordinator" image="/john-bandino.png" compact accent="#10b981" />
-                  <OrgNode name="Engr. Erica Cruz" role="EE Department Research Coordinator" image="/erika_cruz.png" compact accent="#f59e0b" />
-                  <OrgNode name="Patrick Luis Francisco" role="IT Department Research Coordinator" image="/patrick_francisco.png" compact accent="#3b82f6" />
+                  <OrgNode {...org(7)} compact accent="#10b981" />
+                  <OrgNode {...org(8)} compact accent="#f59e0b" />
+                  <OrgNode {...org(9)} compact accent="#3b82f6" />
                 </div>
 
               </div>

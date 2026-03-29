@@ -5,6 +5,16 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, ChevronLeft, ChevronRight, FileText, Check } from "lucide-react";
 import { facilities } from "@/lib/facilities";
+import { fetchSiteContent } from "@/lib/api";
+
+interface HomeContent {
+  collegeSection: { title: string; description: string };
+  deanSection: { name: string; photoUrl: string; description: string };
+  registrarSection: {
+    title: string; description: string; phone: string; email: string;
+    location: string; hours: string; services: { id: string; title: string }[];
+  };
+}
 
 const studentOrgs = [
   { name: "Association of Civil Engineering Students", abbr: "ACES", image: "/CE_Logo.png" },
@@ -12,9 +22,36 @@ const studentOrgs = [
   { name: "Valenzuela Information Technology Society", abbr: "VITS", image: "/vits-logo.png" },
 ];
 
+const DEFAULT_HOME: HomeContent = {
+  collegeSection: {
+    title: "College of Engineering and Information Technology",
+    description: "Our college offers Civil Engineering, Electrical Engineering, and Information Technology programs. Each program is supported by a dedicated student organization:",
+  },
+  deanSection: {
+    name: "Engr. Jordan Velasco",
+    photoUrl: "/Engr-Jordan.jpg",
+    description: "Under his guidance, the College continues to uphold its mission of producing future-ready engineers and IT professionals who are equipped to meet the evolving demands of society and industry.",
+  },
+  registrarSection: {
+    title: "Registrar's Office",
+    description: "The Registrar's Office maintains academic records, coordinates course registration, and ensures the integrity of academic policies and procedures.",
+    phone: "8352 7000 local 125",
+    email: "registrarsoffice_plv@yahoo.com",
+    location: "Maysan Road corner Tongco Street, Maysan, Valenzuela City, Valenzuela, Philippines",
+    hours: "Monday-Friday, 8:00 AM - 5:00 PM",
+    services: [
+      { id: "1", title: "Course Registration & Add/Drop" },
+      { id: "2", title: "Transcript Requests" },
+      { id: "3", title: "Degree Verification" },
+      { id: "4", title: "Graduation Processing" },
+    ],
+  },
+};
+
 export default function Index() {
   const featuredFacilities = facilities.filter((facility) => facility.slug !== "ceit-building");
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [homeContent, setHomeContent] = useState<HomeContent>(DEFAULT_HOME);
   const [isRegistrarVisible, setIsRegistrarVisible] = useState(false);
   const registrarRef = useRef<HTMLElement | null>(null);
   const totalSlides = featuredFacilities.length;
@@ -29,6 +66,12 @@ export default function Index() {
 
     return () => clearInterval(timer);
   }, [totalSlides]);
+
+  useEffect(() => {
+    fetchSiteContent<HomeContent>("home").then((data) => {
+      if (data) setHomeContent(data);
+    });
+  }, []);
 
   useEffect(() => {
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -293,11 +336,10 @@ export default function Index() {
             />
           </div>
           <h2 className="text-5xl font-extrabold text-accent leading-tight">
-            College of Engineering and Information Technology
+            {homeContent.collegeSection.title}
           </h2>
           <p className="text-xl text-muted-foreground mt-8 leading-relaxed">
-            Our college offers Civil Engineering, Electrical Engineering, and Information Technology programs.
-            Each program is supported by a dedicated student organization:
+            {homeContent.collegeSection.description}
           </p>
 
           <div className="flex justify-center gap-16 md:gap-32 mt-20 flex-wrap">
@@ -352,11 +394,10 @@ export default function Index() {
               Meet the Dean
             </p>
             <h2 className="text-5xl md:text-7xl font-extrabold text-white leading-tight">
-              Engr. Jordan Velasco
+              {homeContent.deanSection.name}
             </h2>
             <p className="text-lg text-white/90 mt-6 leading-relaxed max-w-lg">
-              Under his guidance, the College continues to uphold its mission of producing future-ready engineers and IT
-              professionals who are equipped to meet the evolving demands of society and industry.
+              {homeContent.deanSection.description}
             </p>
             <Link
               href="/administration"
@@ -376,28 +417,22 @@ export default function Index() {
         <div className="mx-auto max-w-[1200px] px-5 md:px-8">
           <div className="flex items-center gap-3 mb-6">
             <FileText className="w-7 h-7 text-[#ef8a22]" />
-            <h2 className="text-4xl md:text-5xl font-extrabold text-[#1f2b55]">Registrar&apos;s Office</h2>
+            <h2 className="text-4xl md:text-5xl font-extrabold text-[#1f2b55]">{homeContent.registrarSection.title}</h2>
           </div>
 
           <div className="h-px bg-[#dfe3ef] mb-6" />
 
           <p className="text-lg text-[#4e5a7b] leading-relaxed max-w-4xl">
-            The Registrar&apos;s Office maintains academic records, coordinates course registration, and ensures the integrity
-            of academic policies and procedures.
+            {homeContent.registrarSection.description}
           </p>
 
           <div className="mt-8 rounded-xl border border-[#dfe3ef] bg-[#f3f4f8] p-6 md:p-8">
             <h3 className="text-xl font-bold text-[#1f2b55] mb-4">Services</h3>
             <ul className="space-y-3">
-              {[
-                "Course Registration & Add/Drop",
-                "Transcript Requests",
-                "Degree Verification",
-                "Graduation Processing",
-              ].map((service) => (
-                <li key={service} className="flex items-center gap-3 text-[#1f2b55]">
+              {homeContent.registrarSection.services.map((service) => (
+                <li key={service.id} className="flex items-center gap-3 text-[#1f2b55]">
                   <Check className="w-5 h-5 text-[#ef8a22]" />
-                  <span className="text-lg">{service}</span>
+                  <span className="text-lg">{service.title}</span>
                 </li>
               ))}
             </ul>
@@ -405,10 +440,10 @@ export default function Index() {
 
           <div className="mt-8 text-base text-[#4e5a7b] leading-relaxed">
             <p className="font-semibold text-[#1f2b55]">Contact Information:</p>
-            <p>Telephone: 8352 7000 local 125</p>
-            <p>Email: registrarsoffice_plv@yahoo.com</p>
-            <p>Location: Maysan Road corner Tongco Street, Maysan, Valenzuela City, Valenzuela, Philippines</p>
-            <p>Hours: Monday-Friday, 8:00 AM - 5:00 PM</p>
+            <p>Telephone: {homeContent.registrarSection.phone}</p>
+            <p>Email: {homeContent.registrarSection.email}</p>
+            <p>Location: {homeContent.registrarSection.location}</p>
+            <p>Hours: {homeContent.registrarSection.hours}</p>
           </div>
         </div>
       </section>

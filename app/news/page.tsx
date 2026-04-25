@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Newspaper, ThumbsUp, MessageCircle, Share2, ExternalLink, Search, Filter } from "lucide-react";
-import { fetchArticles, likeArticle } from "@/lib/api";
+import { Newspaper, ThumbsUp, Search, Filter, Heart } from "lucide-react";
+import { fetchArticles, likeArticle, resolveImageUrl } from "@/lib/api";
 import type { Article } from "@/lib/types/article";
 
 const categories = ["All", "Announcements", "Events", "Achievements", "Partnerships"];
@@ -17,24 +17,9 @@ type NewsPost = {
   content: string;
   imageUrl: string | null;
   likes: number;
-  comments: number;
-  shares: number;
   tag: string;
+  authorName: string;
 };
-
-function resolveImageUrl(path: string | null | undefined): string | null {
-  if (!path) {
-    return null;
-  }
-
-  if (path.startsWith("http://") || path.startsWith("https://")) {
-    return path;
-  }
-
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000/api/v1";
-  const backendOrigin = apiBase.replace(/\/api\/v1\/?$/, "");
-  return `${backendOrigin}${path.startsWith("/") ? "" : "/"}${path}`;
-}
 
 function mapArticleToPost(article: Article): NewsPost {
   const createdAt = new Date(article.created_at);
@@ -50,20 +35,21 @@ function mapArticleToPost(article: Article): NewsPost {
     events: "Event",
     partnerships: "Partnership",
   };
-  const category = categoryMap[article.category] ?? "Announcements";
+
+  const authorName = [article.author_first_name, article.author_last_name]
+    .filter(Boolean).join(" ") || "CEIT Staff";
 
   return {
     id: article.id,
-    category,
+    category: categoryMap[article.category] ?? "Announcements",
     date: createdAt.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
     time: createdAt.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
     title: article.title,
     content: article.body,
     imageUrl: resolveImageUrl(article.image_path),
     likes: article.like_count,
-    comments: 0,
-    shares: 0,
     tag: tagMap[article.category] ?? "Announcement",
+    authorName,
   };
 }
 
@@ -82,15 +68,9 @@ export default function NewsPage() {
   const [likingPostIds, setLikingPostIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    const loadArticles = async () => {
-      try {
-        const articles = await fetchArticles();
-        setPosts(articles.map((article) => mapArticleToPost(article)));
-      } catch {
-      }
-    };
-
-    void loadArticles();
+    void fetchArticles()
+      .then((articles) => setPosts(articles.map(mapArticleToPost)))
+      .catch(() => {});
   }, []);
 
   const filtered = posts.filter((p) => {
@@ -101,24 +81,16 @@ export default function NewsPage() {
   });
 
   const handleLike = async (postId: string) => {
-    if (likingPostIds.has(postId)) {
-      return;
-    }
-
+    if (likingPostIds.has(postId)) return;
     setLikingPostIds((prev) => new Set(prev).add(postId));
     setPosts((prev) => prev.map((post) => (post.id === postId ? { ...post, likes: post.likes + 1 } : post)));
-
     try {
       const updated = await likeArticle(postId);
       setPosts((prev) => prev.map((post) => (post.id === postId ? { ...post, likes: updated.like_count } : post)));
     } catch {
       setPosts((prev) => prev.map((post) => (post.id === postId ? { ...post, likes: Math.max(0, post.likes - 1) } : post)));
     } finally {
-      setLikingPostIds((prev) => {
-        const next = new Set(prev);
-        next.delete(postId);
-        return next;
-      });
+      setLikingPostIds((prev) => { const next = new Set(prev); next.delete(postId); return next; });
     }
   };
 
@@ -146,7 +118,7 @@ export default function NewsPage() {
             <span className="text-[#ef8a22]">›</span>
             <span className="text-white/80">News</span>
           </div>
-          <h1 className="text-5xl md:text-6xl font-extrabold text-white">News</h1>
+          <h1 className="text-5xl md:text-6xl font-extrabold text-white">News & Updates</h1>
           <div className="mt-3 h-1 w-16 rounded-full bg-gradient-to-r from-[#ef8a22] to-transparent" />
           <p className="mt-4 max-w-2xl text-white/85 leading-relaxed">
             Latest announcements and updates from the College of Engineering and Information Technology.
@@ -160,17 +132,8 @@ export default function NewsPage() {
         <div className="flex items-center gap-3 mb-6">
           <Newspaper className="w-5 h-5 text-[#ef8a22]" />
           <span className="text-xs font-bold uppercase tracking-widest text-[#ef8a22]"
-            style={{ fontFamily: "'Trebuchet MS', sans-serif" }}>FB Postings</span>
+            style={{ fontFamily: "'Trebuchet MS', sans-serif" }}>CEIT Articles</span>
           <div className="flex-1 h-px bg-gradient-to-r from-[#dfe3ef] to-transparent" />
-          <a
-            href="https://www.facebook.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-full border transition-all hover:shadow-sm"
-            style={{ color: "#1877F2", borderColor: "#1877F230", background: "#1877F210", fontFamily: "'Trebuchet MS', sans-serif" }}
-          >
-            <ExternalLink className="w-3 h-3" /> Visit Facebook Page
-          </a>
         </div>
 
         <div className="grid lg:grid-cols-[280px_1fr] gap-8">
@@ -181,7 +144,7 @@ export default function NewsPage() {
             <div className="rounded-2xl bg-white border border-[#dfe3ef] shadow-sm overflow-hidden">
               <div className="px-5 py-4 border-b border-[#dfe3ef]" style={{ background: "linear-gradient(135deg, #f7f8fd, #f2f4fb)" }}>
                 <p className="text-xs font-bold uppercase tracking-widest text-[#4e5a7b]"
-                  style={{ fontFamily: "'Trebuchet MS', sans-serif" }}>Search Posts</p>
+                  style={{ fontFamily: "'Trebuchet MS', sans-serif" }}>Search Articles</p>
               </div>
               <div className="p-4">
                 <div className="relative">
@@ -228,21 +191,19 @@ export default function NewsPage() {
               </div>
             </div>
 
-            {/* FB Page widget */}
+          {/* Facebook link */}
             <div
-              className="relative overflow-hidden rounded-2xl px-6 py-6 border border-[#1877F230]"
-              style={{ background: "linear-gradient(135deg, #1877F215, #1877F208)" }}
+              className="relative overflow-hidden rounded-2xl px-6 py-6 border border-[#1f2b5520]"
+              style={{ background: "linear-gradient(135deg, #1f2b5510, #1f2b5505)" }}
             >
-              <div className="absolute top-0 right-0 w-24 h-24 rounded-full opacity-10 pointer-events-none"
-                style={{ background: "radial-gradient(circle, #1877F2, transparent 70%)", transform: "translate(30%, -30%)" }} />
-              <p className="text-xs font-black uppercase tracking-widest text-[#1877F2] mb-2"
+              <p className="text-xs font-black uppercase tracking-widest text-[#1f2b55] mb-2"
                 style={{ fontFamily: "'Trebuchet MS', sans-serif" }}>Official Facebook Page</p>
               <p className="text-sm font-bold text-[#1f2b55] mb-1">PLV-CEIT</p>
               <p className="text-xs text-[#4e5a7b] mb-4">Follow us for real-time updates, announcements, and events.</p>
-              <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-full text-white transition-all hover:opacity-90"
-                style={{ background: "#1877F2", fontFamily: "'Trebuchet MS', sans-serif" }}>
-                <ExternalLink className="w-3 h-3" /> Follow Page
+              <a href="https://www.facebook.com/plv.ceit" target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-full text-white bg-[#1f2b55] transition-all hover:opacity-90"
+                style={{ fontFamily: "'Trebuchet MS', sans-serif" }}>
+                Visit Page
               </a>
             </div>
           </aside>
@@ -251,22 +212,23 @@ export default function NewsPage() {
           <div className="space-y-5">
             {filtered.length === 0 ? (
               <div className="rounded-2xl bg-white border border-[#dfe3ef] px-8 py-16 text-center">
-                <p className="text-[#4e5a7b] text-sm">No posts found matching your search.</p>
+                <Newspaper className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                <p className="text-[#4e5a7b] text-sm">No articles found.</p>
               </div>
             ) : (
               filtered.map((post) => {
                 const tag = tagColors[post.tag] ?? tagColors["Announcement"];
                 return (
                   <article key={post.id}
-                    className="rounded-2xl bg-white border border-[#dfe3ef] shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden group">
+                    className="rounded-2xl bg-white border border-[#dfe3ef] shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
 
                     {/* Post header */}
                     <div className="flex items-center gap-3 px-6 py-4 border-b border-[#f2f4fb]">
                       <div className="w-10 h-10 rounded-full bg-[#1f2b55] flex items-center justify-center flex-shrink-0">
-                        <span className="text-white text-xs font-black" style={{ fontFamily: "'Trebuchet MS', sans-serif" }}>PLV</span>
+                        <span className="text-white text-[10px] font-black" style={{ fontFamily: "'Trebuchet MS', sans-serif" }}>CEIT</span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-[#1f2b55] leading-tight">PLV – CEIT Official</p>
+                        <p className="text-sm font-bold text-[#1f2b55] leading-tight">{post.authorName}</p>
                         <p className="text-xs text-[#4e5a7b]">{post.date} at {post.time}</p>
                       </div>
                       <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border ${tag.bg} ${tag.text} ${tag.border}`}
@@ -292,44 +254,19 @@ export default function NewsPage() {
                       </div>
                     )}
 
-                    {/* Engagement bar */}
+                    {/* Engagement bar + like button */}
                     <div className="px-6 py-3 border-t border-[#f2f4fb] flex items-center justify-between">
-                      <div className="flex items-center gap-1 text-xs text-[#4e5a7b]">
-                        <span className="w-5 h-5 rounded-full bg-[#1877F2] flex items-center justify-center">
-                          <ThumbsUp className="w-3 h-3 text-white" />
-                        </span>
-                        <span className="ml-1">{post.likes}</span>
-                        <span className="ml-3">{post.comments} comments</span>
-                        <span className="ml-3">{post.shares} shares</span>
+                      <div className="flex items-center gap-1.5 text-xs text-[#4e5a7b]">
+                        <Heart className="w-4 h-4 text-[#ef8a22]" />
+                        <span>{post.likes} {post.likes === 1 ? "like" : "likes"}</span>
                       </div>
-                      <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 text-xs font-bold text-[#1877F2] hover:underline"
-                        style={{ fontFamily: "'Trebuchet MS', sans-serif" }}>
-                        View on Facebook <ExternalLink className="w-3 h-3" />
-                      </a>
-                    </div>
-
-                    {/* Reaction buttons */}
-                    <div className="px-4 py-2 border-t border-[#f2f4fb] flex gap-1">
                       <button
                         onClick={() => void handleLike(post.id)}
                         disabled={likingPostIds.has(post.id)}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold text-[#4e5a7b] hover:bg-[#f2f4fb] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                        className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold border border-[#dfe3ef] text-[#4e5a7b] hover:bg-[#f2f4fb] hover:border-[#ef8a22] hover:text-[#ef8a22] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                         style={{ fontFamily: "'Trebuchet MS', sans-serif" }}
                       >
                         <ThumbsUp className="w-3.5 h-3.5" /> Like
-                      </button>
-                      <button
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold text-[#4e5a7b] hover:bg-[#f2f4fb] transition-colors"
-                        style={{ fontFamily: "'Trebuchet MS', sans-serif" }}
-                      >
-                        <MessageCircle className="w-3.5 h-3.5" /> Comment
-                      </button>
-                      <button
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold text-[#4e5a7b] hover:bg-[#f2f4fb] transition-colors"
-                        style={{ fontFamily: "'Trebuchet MS', sans-serif" }}
-                      >
-                        <Share2 className="w-3.5 h-3.5" /> Share
                       </button>
                     </div>
 

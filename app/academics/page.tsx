@@ -1,7 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Check, BookOpen, GraduationCap, ClipboardList, Cpu, Building2, Zap, ChevronDown } from "lucide-react";
+import { fetchSiteContent } from "@/lib/api";
+
+interface AcademicsContent {
+  aboutCEIT: { description: string; bulletPoints: { id: string; text: string }[] };
+  coreValues: { id: string; text: string }[];
+  collegeAim: { id: string; text: string }[];
+  academicSupport: { id: string; text: string }[];
+  admission: string;
+}
 
 type AcademicTab = "About CEIT" | "Programs Offered" | "Admission";
 type ProgramCode = "BSIT" | "BSEE" | "BSCE";
@@ -150,7 +159,7 @@ BSIT students may specialize in technology or management domains including Netwo
   },
 };
 
-const coreValues = [
+const defaultCoreValues = [
   { label: "Academic Excellence", color: "#ef8a22" },
   { label: "Integrity and Professional Leadership", color: "#3b82f6" },
   { label: "Scholarly Research", color: "#10b981" },
@@ -158,10 +167,50 @@ const coreValues = [
   { label: "Lifelong Learning", color: "#8b5cf6" },
 ];
 
+const coreValueColors = ["#ef8a22", "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899", "#14b8a6", "#f97316"];
+
 const Academics = () => {
   const [activeTab, setActiveTab] = useState<AcademicTab>("About CEIT");
   const [activeProgram, setActiveProgram] = useState<ProgramCode | null>(null);
   const [isProgramMenuOpen, setIsProgramMenuOpen] = useState(false);
+  const [cmsContent, setCmsContent] = useState<AcademicsContent | null>(null);
+
+  useEffect(() => {
+    fetchSiteContent<AcademicsContent>("academics").then((data) => {
+      if (data) setCmsContent(data);
+    });
+  }, []);
+
+  const coreValues = cmsContent
+    ? cmsContent.coreValues.map((v, i) => ({ label: v.text, color: coreValueColors[i % coreValueColors.length] }))
+    : defaultCoreValues;
+
+  const bulletPoints = cmsContent
+    ? cmsContent.aboutCEIT.bulletPoints.map((bp) => bp.text)
+    : [
+        "Acquire full understanding of scientific principles and knowledge in their respective fields",
+        "Develop a high level of competence in engineering and IT methods and applications",
+        "Communicate effectively and succinctly the results of technical studies (both verbally and in writing)",
+        "Nurture the desire for continuing professional growth and explore new horizons in technology",
+        "Imbue graduates with socially and morally sound motivations and principles",
+      ];
+
+  const collegeAims = cmsContent
+    ? cmsContent.collegeAim.map((a) => a.text)
+    : [
+        "To become the premiere institution of higher learning in Valenzuela City",
+        "To produce competent and committed engineers and IT professionals",
+        "To contribute to the development of the City of Valenzuela and the nation",
+      ];
+
+  const academicSupport = cmsContent
+    ? cmsContent.academicSupport.map((s) => s.text)
+    : [
+        "Engineering seminars and review sessions for graduating students",
+        "Assessment examinations to monitor board exam readiness",
+        "Laboratory facilities for hands-on learning",
+        "Industry linkages and research engagements",
+      ];
 
   const currentProgram = activeProgram ? programs[activeProgram] : null;
 
@@ -358,13 +407,7 @@ const Academics = () => {
                   <h3 className="text-lg font-extrabold text-[#1f2b55]">Programs Designed To</h3>
                 </div>
                 <div className="px-7 py-6 grid md:grid-cols-2 gap-3">
-                  {[
-                    "Acquire full understanding of scientific principles and knowledge in their respective fields",
-                    "Develop a high level of competence in engineering and IT methods and applications",
-                    "Communicate effectively and succinctly the results of technical studies (both verbally and in writing)",
-                    "Nurture the desire for continuing professional growth and explore new horizons in technology",
-                    "Imbue graduates with socially and morally sound motivations and principles",
-                  ].map((item, i) => (
+                  {bulletPoints.map((item, i) => (
                     <div key={i} className="flex items-start gap-3 p-3 rounded-xl border border-[#dfe3ef] bg-[#f7f8fd] hover:bg-white hover:shadow-sm transition-all">
                       <Check className="w-4 h-4 text-[#ef8a22] flex-shrink-0 mt-0.5" />
                       <p className="text-sm text-[#4e5a7b] leading-relaxed">{item}</p>
@@ -395,11 +438,7 @@ const Academics = () => {
                     <h3 className="text-lg font-extrabold text-[#1f2b55]">College Aim</h3>
                   </div>
                   <div className="px-7 py-6 space-y-3">
-                    {[
-                      "To become the premiere institution of higher learning in Valenzuela City",
-                      "To produce competent and committed engineers and IT professionals",
-                      "To contribute to the development of the City of Valenzuela and the nation",
-                    ].map((item, i) => (
+                    {collegeAims.map((item, i) => (
                       <div key={i} className="flex items-start gap-3 p-3 rounded-xl border border-[#dfe3ef] bg-[#f7f8fd] hover:bg-white hover:shadow-sm transition-all">
                         <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black flex-shrink-0 mt-0.5"
                           style={{ background: "#ef8a2215", color: "#ef8a22", border: "1px solid #ef8a2230", fontFamily: "'Trebuchet MS', sans-serif" }}>
@@ -418,12 +457,7 @@ const Academics = () => {
                   <h3 className="text-lg font-extrabold text-[#1f2b55]">Academic Support &amp; Training</h3>
                 </div>
                 <div className="px-7 py-6 grid md:grid-cols-2 gap-3">
-                  {[
-                    "Engineering seminars and review sessions for graduating students",
-                    "Assessment examinations to monitor board exam readiness",
-                    "Laboratory facilities for hands-on learning",
-                    "Industry linkages and research engagements",
-                  ].map((item, i) => (
+                  {academicSupport.map((item, i) => (
                     <div key={i} className="flex items-start gap-3 p-3 rounded-xl border border-[#dfe3ef] bg-[#f7f8fd] hover:bg-white hover:shadow-sm transition-all">
                       <Check className="w-4 h-4 text-[#ef8a22] flex-shrink-0 mt-0.5" />
                       <p className="text-sm text-[#4e5a7b] leading-relaxed">{item}</p>

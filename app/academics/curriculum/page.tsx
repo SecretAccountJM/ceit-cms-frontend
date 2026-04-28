@@ -290,11 +290,10 @@ export default function CurriculumPage() {
         </div>
 
         {/* ── STATS STRIP ── */}
-        <div className="mt-5 grid grid-cols-3 gap-3">
+        <div className="mt-5 grid grid-cols-2 gap-3">
           {[
             { label: "Programs Offered", value: "3" },
             { label: "Years Duration", value: "4" },
-            { label: "Specializations", value: "10+" },
           ].map((stat) => (
             <div
               key={stat.label}

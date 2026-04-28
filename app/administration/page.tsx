@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Users, Award } from "lucide-react";
+import { Users } from "lucide-react";
 import { fetchSiteContent } from "@/lib/api";
 
 interface AdminCmsContent {
-  boardOfRegents: { members: { id: string; name: string; position: string; photo: string }[] };
   organizationalChart: { members: { id: string; name: string; position: string; photo: string }[] };
 }
 
@@ -67,41 +66,6 @@ const OrgNode = ({ name, role, image, compact = false, accent = "#ef8a22" }: Org
   </div>
 );
 
-type AdministrationTab = "Board of Regents" | "Organizational Chart";
-
-const boardMembers = [
-  { role: "Chairman", names: ["City Mayor Weslie T. Gatchalian"], highlight: true },
-  { role: "Vice-Chairman", names: ["Atty. Danilo L. Concepcion"], highlight: true },
-  { role: "PLV President", names: ["Dr. Nedeña C. Torralba"], highlight: true },
-  {
-    role: "Regent",
-    names: [
-      "Regent Lorena C. Natividad-Borja",
-      "Regent Floro P. Alejo",
-      "Regent Wilfredo E. Cabral",
-      "Regent Angeleca SJ. Villena",
-    ],
-    highlight: false,
-  },
-  { role: "Member", names: ["Atty. Allan Roullo Yap"], highlight: false },
-  { role: "Board Secretary", names: ["Adelia E. Soriano"], highlight: false },
-  { role: "Board Treasurer", names: ["Ulysses Hermogenes C. Aguilar"], highlight: false },
-  {
-    role: "Technical Working Group",
-    names: [
-      "Elizabeth A. Chongco",
-      "Pia Febes P. Aquino",
-      "Flocerfida D. Villamar",
-      "Erlindo C. Dionisio",
-      "Leonora B. Katalbas",
-      "Ana Maria C. Fernandez",
-      "Carolina V. Santiago",
-      "Lanilyn A. Deroña",
-    ],
-    highlight: false,
-  },
-];
-
 const defaultOrgChart = [
   { name: "Dr. Nedena C. Torralba", position: "University President", photo: "/pres_torralba.png" },
   { name: "Dr. Michville Rivera", position: "Vice President for Academic Affairs", photo: "/vpaa_rivera.png" },
@@ -116,7 +80,6 @@ const defaultOrgChart = [
 ];
 
 const AdministrationPage = () => {
-  const [activeTab, setActiveTab] = useState<AdministrationTab>("Board of Regents");
   const [cmsContent, setCmsContent] = useState<AdminCmsContent | null>(null);
 
   useEffect(() => {
@@ -127,14 +90,12 @@ const AdministrationPage = () => {
 
   const orgChartMembers = cmsContent?.organizationalChart?.members ?? defaultOrgChart;
 
-  // Helper to get org chart member by index with fallback
   const org = (index: number) => {
     const member = orgChartMembers[index];
     return member
-      ? { name: member.name, role: member.position, image: member.photo }
+      ? { name: member.name, role: member.position, image: member.photo || undefined }
       : { name: "—", role: "—", image: undefined };
   };
-
   return (
     <div className="min-h-screen bg-[#f2f4fb]">
 
@@ -184,137 +145,8 @@ const AdministrationPage = () => {
           <div className="flex-1 h-px bg-gradient-to-r from-[#dfe3ef] to-transparent" />
         </div>
 
-        {/* ── TABS ── */}
-        <div className="flex flex-wrap gap-2 mb-8">
-          {(["Board of Regents", "Organizational Chart"] as AdministrationTab[]).map((tab) => {
-            const isActive = activeTab === tab;
-            return (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className="relative px-6 py-3 rounded-2xl text-sm font-bold border transition-all duration-200 overflow-hidden hover:shadow-md hover:-translate-y-0.5"
-                style={{
-                  background: isActive ? "linear-gradient(135deg, #1f2b55, #162046)" : "white",
-                  borderColor: isActive ? "#1f2b55" : "#dfe3ef",
-                  color: isActive ? "white" : "#4e5a7b",
-                  fontFamily: "'Trebuchet MS', sans-serif",
-                  letterSpacing: "0.04em",
-                }}
-              >
-                {isActive && (
-                  <span
-                    className="absolute bottom-0 left-0 right-0 h-[3px] rounded-b-2xl"
-                    style={{ background: "#ef8a22" }}
-                  />
-                )}
-                {tab}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* ── BOARD OF REGENTS ── */}
-        {activeTab === "Board of Regents" && (
-          <div key="board">
-            {/* Header card */}
-            <div
-              className="relative overflow-hidden rounded-2xl px-8 py-8 mb-8 border border-[#d97706]"
-              style={{ background: "linear-gradient(150deg, #ef8a22 0%, #d97706 55%, #b45309 100%)" }}
-            >
-              <div
-                className="absolute inset-0 opacity-[0.08] pointer-events-none"
-                style={{
-                  backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)",
-                  backgroundSize: "24px 24px",
-                }}
-              />
-              <div
-                className="absolute top-0 right-0 w-64 h-64 blur-3xl opacity-25 pointer-events-none"
-                style={{ background: "radial-gradient(circle, #fff7ed, transparent 70%)" }}
-              />
-              <div className="relative flex items-center gap-3 mb-1">
-                <Award className="w-5 h-5 text-white/80" />
-                <span
-                  className="text-xs font-bold uppercase tracking-widest text-white/80"
-                  style={{ fontFamily: "'Trebuchet MS', sans-serif" }}
-                >
-                  Governing Body
-                </span>
-              </div>
-              <h2 className="relative text-3xl md:text-4xl font-extrabold text-white">Board of Regents</h2>
-              <p className="relative mt-1 text-white/70 text-sm">
-                Pamantasan ng Lungsod ng Valenzuela
-              </p>
-            </div>
-
-            {/* Board members cards */}
-            <div
-              className="relative overflow-hidden rounded-2xl border border-[#dfe3ef] px-4 py-5 md:px-6 md:py-6"
-              style={{ background: "linear-gradient(135deg, #f7f8fd 0%, #eef2fa 100%)" }}
-            >
-              <div className="mx-auto max-w-[760px] grid grid-cols-1 gap-3">
-                {cmsContent?.boardOfRegents?.members
-                  ? cmsContent.boardOfRegents.members.map((member) => (
-                    <div
-                      key={member.id}
-                      className="relative overflow-hidden rounded-xl border border-[#d9deec] bg-[#fcfdff] px-4 py-3 shadow-[0_1px_0_rgba(31,43,85,0.05)] text-center"
-                    >
-                      <span
-                        className="pointer-events-none absolute -right-1 -bottom-2 text-[36px] font-black opacity-[0.04] leading-none select-none"
-                        style={{ color: "#1f2b55", fontFamily: "'Georgia', serif" }}
-                      >
-                        PLV
-                      </span>
-                      <p
-                        className="text-[9px] font-black uppercase tracking-widest leading-none mb-1"
-                        style={{ color: "#7a8398", fontFamily: "'Trebuchet MS', sans-serif" }}
-                      >
-                        {member.position}
-                      </p>
-                      <p
-                        className="text-[15px] font-extrabold text-[#1f2b55] leading-tight"
-                        style={{ fontFamily: "'Trebuchet MS', sans-serif" }}
-                      >
-                        {member.name}
-                      </p>
-                    </div>
-                  ))
-                  : boardMembers.flatMap((group) =>
-                    group.names.map((name) => (
-                      <div
-                        key={`${group.role}-${name}`}
-                        className="relative overflow-hidden rounded-xl border border-[#d9deec] bg-[#fcfdff] px-4 py-3 shadow-[0_1px_0_rgba(31,43,85,0.05)] text-center"
-                      >
-                        <span
-                          className="pointer-events-none absolute -right-1 -bottom-2 text-[36px] font-black opacity-[0.04] leading-none select-none"
-                          style={{ color: "#1f2b55", fontFamily: "'Georgia', serif" }}
-                        >
-                          PLV
-                        </span>
-                        <p
-                          className="text-[9px] font-black uppercase tracking-widest leading-none mb-1"
-                          style={{ color: "#7a8398", fontFamily: "'Trebuchet MS', sans-serif" }}
-                        >
-                          {group.role}
-                        </p>
-                        <p
-                          className="text-[15px] font-extrabold text-[#1f2b55] leading-tight"
-                          style={{ fontFamily: "'Trebuchet MS', sans-serif" }}
-                        >
-                          {name}
-                        </p>
-                      </div>
-                    ))
-                  )
-                }
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* ── ORGANIZATIONAL CHART ── */}
-        {activeTab === "Organizational Chart" && (
-          <div key="orgchart">
+        <div key="orgchart">
             {/* Header card */}
             <div
               className="relative overflow-hidden rounded-2xl px-8 py-8 mb-8 border border-[#d97706]"
@@ -410,8 +242,7 @@ const AdministrationPage = () => {
 
               </div>
             </div>
-          </div>
-        )}
+        </div>
 
       </div>
     </div>

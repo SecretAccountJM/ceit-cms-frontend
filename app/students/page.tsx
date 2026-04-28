@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import {
-  Shield, BookOpen, Briefcase, Heart, MessageCircle,
+  BookOpen, Briefcase, MessageCircle,
   ChevronLeft, ChevronRight, Users, ExternalLink,
 } from "lucide-react";
 
@@ -80,36 +80,6 @@ const guidanceCards = [
   },
 ];
 
-const nstpPrograms = [
-  {
-    icon: Shield,
-    name: "ROTC",
-    full: "Reserve Officers' Training Corps",
-    desc: "Focuses on military training, discipline, and leadership development.",
-    color: "#ef8a22",
-    border: "border-orange-200",
-    bg: "bg-orange-50",
-  },
-  {
-    icon: Heart,
-    name: "CWTS",
-    full: "Civic Welfare Training Service",
-    desc: "Focuses on activities that contribute to the general welfare and betterment of communities.",
-    color: "#e11d48",
-    border: "border-rose-200",
-    bg: "bg-rose-50",
-  },
-  {
-    icon: BookOpen,
-    name: "LTS",
-    full: "Literacy Training Service",
-    desc: "Focuses on teaching literacy and numeracy skills to communities in need.",
-    color: "#7c3aed",
-    border: "border-violet-200",
-    bg: "bg-violet-50",
-  },
-];
-
 export default function Students() {
   const departmentOrder: DepartmentKey[] = ["CE", "EE", "IT"];
   const headerSlides = [
@@ -119,12 +89,11 @@ export default function Students() {
   ];
   const [currentHeaderSlide, setCurrentHeaderSlide] = useState(0);
   const [visibleSections, setVisibleSections] = useState({
-    hero: false, organizations: false, guidance: false, nstp: false,
+    hero: false, organizations: false, guidance: false,
   });
   const heroRef = useRef<HTMLElement | null>(null);
   const organizationsRef = useRef<HTMLElement | null>(null);
   const guidanceRef = useRef<HTMLElement | null>(null);
-  const nstpRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -136,7 +105,7 @@ export default function Students() {
   useEffect(() => {
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (prefersReducedMotion || !("IntersectionObserver" in window)) {
-      setVisibleSections({ hero: true, organizations: true, guidance: true, nstp: true });
+      setVisibleSections({ hero: true, organizations: true, guidance: true });
       return;
     }
 
@@ -144,7 +113,6 @@ export default function Students() {
       { key: "hero", element: heroRef.current },
       { key: "organizations", element: organizationsRef.current },
       { key: "guidance", element: guidanceRef.current },
-      { key: "nstp", element: nstpRef.current },
     ];
 
     const observer = new IntersectionObserver(
@@ -450,74 +418,6 @@ export default function Students() {
             </div>
 
           </div>
-        </div>
-      </section>
-
-      {/* ── NSTP ── */}
-      <section
-        ref={nstpRef}
-        className={`py-16 md:py-20 bg-[#f2f4fb] ${revealClass(visibleSections.nstp)}`}
-      >
-        <div className="mx-auto max-w-[1200px] px-5 md:px-8">
-
-          {/* Header row */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
-            <div>
-              <span
-                className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#ef8a22] mb-2"
-                style={{ fontFamily: "'Trebuchet MS', sans-serif" }}
-              >
-                <Shield className="w-4 h-4" /> Required Program
-              </span>
-              <h2 className="text-4xl md:text-5xl font-extrabold text-[#1f2b55] leading-tight">
-                National Service<br />Training Program
-              </h2>
-              <p
-                className="text-xs font-bold text-[#4e5a7b] mt-1 uppercase tracking-widest"
-                style={{ fontFamily: "'Trebuchet MS', sans-serif" }}
-              >
-                NSTP
-              </p>
-            </div>
-            <p className="text-[#4e5a7b] max-w-sm leading-relaxed text-[15px]">
-              The NSTP promotes civic consciousness and defense preparedness among the youth while developing their physical, moral, spiritual, intellectual, and social well-being.
-            </p>
-          </div>
-
-          {/* NSTP Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {nstpPrograms.map((prog) => (
-              <article
-                key={prog.name}
-                className={`group relative rounded-2xl border ${prog.border} ${prog.bg} p-7 overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1`}
-              >
-                {/* Watermark */}
-                <span
-                  className="absolute -right-2 -bottom-3 text-[76px] font-black opacity-[0.07] select-none pointer-events-none leading-none"
-                  style={{ color: prog.color, fontFamily: "'Georgia', serif" }}
-                >
-                  {prog.name}
-                </span>
-
-                <div
-                  className="w-11 h-11 rounded-xl flex items-center justify-center mb-5"
-                  style={{ background: `${prog.color}18`, border: `1px solid ${prog.color}30` }}
-                >
-                  <prog.icon className="w-5 h-5" style={{ color: prog.color }} />
-                </div>
-
-                <p
-                  className="text-[10px] font-black uppercase tracking-widest mb-1"
-                  style={{ color: prog.color, fontFamily: "'Trebuchet MS', sans-serif" }}
-                >
-                  {prog.name}
-                </p>
-                <h3 className="text-xl font-extrabold text-[#1f2b55] leading-snug mb-3">{prog.full}</h3>
-                <p className="text-[#4e5a7b] text-sm leading-relaxed">{prog.desc}</p>
-              </article>
-            ))}
-          </div>
-
         </div>
       </section>
 
